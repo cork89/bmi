@@ -1,47 +1,54 @@
 {{define "body"}}
-<div class="gallery">
+<div class="gallery-wrapper">
+  <div class="gallery">
     {{range .}} {{if .ImageLink}}
     <div class="item">
-        <div class="label country">{{.Country}}</div>
+      <div class="label country">{{.Country}}</div>
 
-        <div class="image-frame">
-            <img
-                data-src="https://pub-488a9578ab1844a5a92b26e9a82d4a8d.r2.dev/{{.ImageLink}}"
-                alt=""
-                loading="lazy"
-            />
-        </div>
+      <div class="image-frame">
+        <img
+          data-src="https://pub-488a9578ab1844a5a92b26e9a82d4a8d.r2.dev/{{.ImageLink}}"
+          alt=""
+          loading="lazy"
+        />
+      </div>
 
-        {{if .NationalDish}}
-        <div class="label dish">
-            <a href="{{.DishWiki}}" target="_blank" rel="noopener">
-                {{.NationalDish}}
-            </a>
-        </div>
-        {{end}}
+      {{if .NationalDish}}
+      <div class="label dish">
+        <a href="{{.DishWiki}}" target="_blank" rel="noopener">
+          {{.NationalDish}}
+        </a>
+      </div>
+      {{end}}
     </div>
     {{end}} {{end}}
+  </div>
+  <div class="ruler">
+    {{range .}}
+    <div class="ruler-mark">{{printf "%.1f" .Both}}</div>
+    {{end}}
+  </div>
 </div>
 
 <script>
-    const images = document.querySelectorAll("img[data-src]");
+  const images = document.querySelectorAll("img[data-src]");
 
-    const observer = new IntersectionObserver(
-        (entries, obs) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.removeAttribute("data-src");
-                    obs.unobserve(img);
-                }
-            });
-        },
-        {
-            rootMargin: "400px",
-        },
-    );
+  const observer = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.removeAttribute("data-src");
+          obs.unobserve(img);
+        }
+      });
+    },
+    {
+      rootMargin: "400px",
+    }
+  );
 
-    images.forEach((img) => observer.observe(img));
+  images.forEach((img) => observer.observe(img));
 </script>
 {{end}}

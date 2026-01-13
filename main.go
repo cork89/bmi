@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/csv"
-	"fmt"
 	"html/template"
 	"math"
 	"net/http"
@@ -36,25 +35,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func slideHandler(w http.ResponseWriter, r *http.Request) {
-	v, err := strconv.ParseFloat(r.URL.Query().Get("n"), 64)
-	if err != nil {
-		http.Error(w, "bad value", http.StatusBadRequest)
-		return
-	}
-
-	row := closestRow(v)
-	if row == nil {
-		http.Error(w, "no data", http.StatusNotFound)
-		return
-	}
-
-	err = tmpl["slide"].Execute(w, row)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 var rows []Row
 
 func loadCSV() error {
@@ -71,7 +51,7 @@ func loadCSV() error {
 
 	for i, rec := range records {
 		if i == 0 {
-			continue // header
+			continue
 		}
 
 		both, err := strconv.ParseFloat(rec[1], 64)
@@ -121,13 +101,10 @@ func main() {
 		template.ParseFiles("static/slide.html"),
 	)
 
-	http.HandleFunc("/slide", slideHandler)
-
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "."+r.URL.Path)
 	})
 
 	http.HandleFunc("/", homeHandler)
 	http.ListenAndServe(":8083", nil)
-	fmt.Println("running on port 8083")
 }

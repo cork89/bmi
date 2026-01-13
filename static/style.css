@@ -9,11 +9,38 @@ body {
     padding: 60px 0;
 }
 
+.gallery-wrapper {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+/* RULER */
+.ruler {
+    position: sticky;
+    top: 60px;
+    margin-left: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.ruler-mark {
+    height: 260px;
+    display: flex;
+    align-items: center;
+    font-size: 4rem;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.25);
+    letter-spacing: 0.05em;
+}
+
 .gallery {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 100px;
+    gap: 20px;
 }
 
 .item {
