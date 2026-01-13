@@ -1,3 +1,31 @@
 {{define "body"}}
-<p>hello world</p>
+<input
+	type="range"
+	min="20.5"
+	max="32.5"
+	step="0.1"
+	value="26.0"
+	id="slider"
+/>
+
+<div id="content"></div>
+
+<script>
+	const slider = document.getElementById("slider");
+	const content = document.getElementById("content");
+
+	function loadSlide(value) {
+		fetch("/slide?n=" + value)
+			.then((res) => res.text())
+			.then((html) => {
+				content.innerHTML = html;
+			});
+	}
+
+	slider.addEventListener("input", () => {
+		loadSlide(slider.value);
+	});
+
+	loadSlide(slider.value);
+</script>
 {{end}}
