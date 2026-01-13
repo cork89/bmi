@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/csv"
+	"fmt"
 	"html/template"
 	"math"
 	"net/http"
@@ -29,7 +30,7 @@ type Row struct {
 var tmpl map[string]*template.Template
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	err := tmpl["home"].ExecuteTemplate(w, "base", nil)
+	err := tmpl["home"].ExecuteTemplate(w, "base", rows)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -128,4 +129,5 @@ func main() {
 
 	http.HandleFunc("/", homeHandler)
 	http.ListenAndServe(":8083", nil)
+	fmt.Println("running on port 8083")
 }
