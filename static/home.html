@@ -1,54 +1,115 @@
 {{define "body"}}
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<header class="header">
+  <div>
+    <h1>The Atlas of Appetite</h1>
+    <p class="header-subtitle">A Culinary Journey Through Global BMI</p>
+  </div>
+</header>
+
 <div class="gallery-wrapper">
   <div class="gallery">
     {{range .}} {{if .ImageLink}}
-    <div class="item">
-      <div class="label country">{{.Country}}</div>
+    <article class="item">
+      <div class="country">{{.Country}}</div>
 
       <div class="image-frame">
+        <div class="vignette"></div>
         <img
           data-src="https://pub-488a9578ab1844a5a92b26e9a82d4a8d.r2.dev/{{.ImageLink}}"
-          alt=""
+          alt="National dish of {{.Country}}"
           loading="lazy"
         />
+          <div class="bmi-badge">{{printf "%.1f" .Both}}</div>
       </div>
 
       {{if .NationalDish}}
-      <div class="label dish">
-        <a href="{{.DishWiki}}" target="_blank" rel="noopener">
+      <div class="dish">
+        <a href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
           {{.NationalDish}}
         </a>
       </div>
+      {{else}}
+      <div class="dish"></div>
       {{end}}
-    </div>
+    </article>
     {{end}} {{end}}
   </div>
-  <div class="ruler">
-    {{range .}}
+
+  <!-- <aside class="ruler">
+    <div class="ruler-label">BMI Index</div>
+    {{range .}} {{if .ImageLink}}
     <div class="ruler-mark">{{printf "%.1f" .Both}}</div>
-    {{end}}
-  </div>
+    {{end}} {{end}}
+  </aside> -->
 </div>
 
 <script>
-  const images = document.querySelectorAll("img[data-src]");
+  // Scroll progress indicator
+  const scrollProgress = document.getElementById('scrollProgress');
+  
+  function updateScrollProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPercent = (scrollTop / docHeight) * 100;
+    scrollProgress.style.height = scrollPercent + '%';
+  }
+  
+  window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
-  const observer = new IntersectionObserver(
+  // Lazy loading with intersection observer
+  const images = document.querySelectorAll('img[data-src]');
+  const imageFrames = document.querySelectorAll('.image-frame');
+  
+  // Add loading state
+  imageFrames.forEach(frame => frame.classList.add('loading'));
+
+  const imageObserver = new IntersectionObserver(
     (entries, obs) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const img = entry.target;
+          const frame = img.closest('.image-frame');
+          
+          img.onload = () => {
+            frame.classList.remove('loading');
+          };
+          
           img.src = img.dataset.src;
-          img.removeAttribute("data-src");
+          img.removeAttribute('data-src');
           obs.unobserve(img);
         }
       });
     },
     {
-      rootMargin: "400px",
+      rootMargin: '200px',
     }
   );
 
-  images.forEach((img) => observer.observe(img));
+  images.forEach((img) => imageObserver.observe(img));
+
+  // Reveal animation on scroll
+  const items = document.querySelectorAll('.item');
+  
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    }
+  );
+
+  items.forEach((item, index) => {
+    item.style.animationPlayState = 'paused';
+    item.style.animationDelay = `${Math.min(index * 0.05, 0.5)}s`;
+    revealObserver.observe(item);
+  });
 </script>
 {{end}}
