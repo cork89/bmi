@@ -13,11 +13,6 @@ import (
 //go:embed countries.csv
 var csvData embed.FS
 
-type SlideData struct {
-	Image       string
-	Description string
-}
-
 type Row struct {
 	Country      string
 	Both         float64
@@ -96,9 +91,6 @@ func main() {
 
 	tmpl["home"] = template.Must(
 		template.ParseFiles("static/home.html", "static/base.html"),
-	)
-	tmpl["slide"] = template.Must(
-		template.ParseFiles("static/slide.html"),
 	)
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {

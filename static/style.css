@@ -106,7 +106,7 @@ body::after {
 
 .item {
   display: grid;
-  grid-template-columns: 200px 1fr 200px;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   gap: 40px;
   opacity: 0;
@@ -286,55 +286,6 @@ body::after {
   letter-spacing: 0.05em;
 }
 
-/* Ruler - Vertical BMI Scale */
-/* .ruler {
-  position: sticky;
-  top: 140px;
-  height: fit-content;
-  margin-left: 80px;
-  padding-left: 40px;
-  border-left: 1px solid rgba(201, 162, 39, 0.15);
-}
-
-.ruler-mark {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 2.4rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-  position: relative;
-  transition: color 0.3s ease;
-}
-
-.ruler-mark::before {
-  content: '';
-  position: absolute;
-  left: -40px;
-  top: 50%;
-  width: 20px;
-  height: 1px;
-  background: rgba(201, 162, 39, 0.2);
-  transform: translateY(-50%);
-}
-
-.ruler-label {
-  position: absolute;
-  top: -60px;
-  left: -40px;
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--gold-dim);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-} */
-
 /* Scroll progress indicator */
 .scroll-progress {
   position: fixed;
@@ -364,7 +315,7 @@ body::after {
   }
   
   .item {
-    grid-template-columns: 140px 1fr 140px;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
   }
   
