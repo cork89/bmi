@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -21,16 +22,83 @@ type Row struct {
 	ImageLink    string
 }
 
+type CardData struct {
+	Row
+	GridRow int
+	GridCol int
+	Order   int
+}
+
+type PageData struct {
+	Cards   []CardData
+	NumCols int
+	NumRows int
+}
+
 var tmpl map[string]*template.Template
+var rows []Row
+
+func calculateDiagonalLayout(rows []Row, numCols int) PageData {
+	numItems := 0
+	for _, r := range rows {
+		if r.ImageLink != "" {
+			numItems++
+		}
+	}
+
+	numRows := (numItems + numCols - 1) / numCols
+
+	cards := make([]CardData, 0, numItems)
+	positions := make([]struct{ row, col int }, 0, numItems)
+
+	// Generate diagonal positions
+	for d := 0; d < numRows+numCols-1 && len(positions) < numItems; d++ {
+		var row, col int
+		if d < numRows {
+			row = d
+			col = 0
+		} else {
+			row = numRows - 1
+			col = d - numRows + 1
+		}
+
+		for row >= 0 && col < numCols && len(positions) < numItems {
+			positions = append(positions, struct{ row, col int }{row + 1, col + 1})
+			row--
+			col++
+		}
+	}
+
+	// Assign positions to rows with images
+	posIndex := 0
+	orderIndex := 1
+	for _, r := range rows {
+		if r.ImageLink != "" && posIndex < len(positions) {
+			cards = append(cards, CardData{
+				Row:     r,
+				GridRow: positions[posIndex].row,
+				GridCol: positions[posIndex].col,
+				Order:   orderIndex,
+			})
+			posIndex++
+			orderIndex++
+		}
+	}
+
+	return PageData{
+		Cards:   cards,
+		NumCols: numCols,
+		NumRows: numRows,
+	}
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	err := tmpl["home"].ExecuteTemplate(w, "base", rows)
+	pageData := calculateDiagonalLayout(rows, 4)
+	err := tmpl["home"].ExecuteTemplate(w, "base", pageData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-
-var rows []Row
 
 func loadCSV() error {
 	data, err := csvData.ReadFile("countries.csv")
@@ -38,8 +106,8 @@ func loadCSV() error {
 		return err
 	}
 
-	r := csv.NewReader(bytes.NewReader(data))
-	records, err := r.ReadAll()
+	reader := csv.NewReader(bytes.NewReader(data))
+	records, err := reader.ReadAll()
 	if err != nil {
 		return err
 	}
@@ -62,6 +130,10 @@ func loadCSV() error {
 			ImageLink:    rec[6],
 		})
 	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].Both > rows[j].Both
+	})
 
 	return nil
 }

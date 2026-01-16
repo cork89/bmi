@@ -10,8 +10,6 @@
   --text-primary: #f5efe6;
   --text-secondary: rgba(245, 239, 230, 0.6);
   --text-muted: rgba(245, 239, 230, 0.3);
-  --shadow-warm: 0 20px 60px rgba(201, 162, 39, 0.08);
-  --shadow-deep: 0 40px 80px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -32,7 +30,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Ambient background texture */
 body::before {
   content: '';
   position: fixed;
@@ -44,7 +41,6 @@ body::before {
   z-index: 0;
 }
 
-/* Grain overlay */
 body::after {
   content: '';
   position: fixed;
@@ -63,10 +59,7 @@ body::after {
   right: 0;
   z-index: 100;
   padding: 24px 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(to bottom, var(--bg-deep) 0%, transparent 100%);
+  background: linear-gradient(to bottom, var(--bg-deep) 0%, var(--bg-deep) 60%, transparent 100%);
 }
 
 .header h1 {
@@ -84,134 +77,70 @@ body::after {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--text-muted);
+  margin: 4px 0 0;
 }
 
-/* Main layout */
+/* Gallery wrapper */
 .gallery-wrapper {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 140px 60px 120px;
+  padding: 120px 40px 80px;
   position: relative;
   z-index: 2;
 }
 
-/* The Gallery */
+/* CSS Masonry using columns */
 .gallery {
+  display: grid;
+  grid-template-columns: repeat(var(--num-cols), 1fr);
+  grid-template-rows: repeat(var(--num-rows), auto);
+  gap: 24px;
+}
+
+.card {
+  grid-row: var(--grid-row);
+  grid-column: var(--grid-col);
+  order: var(--order);
+  background: var(--bg-card);
+  border: 1px solid rgba(245, 239, 230, 0.06);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 100px;
 }
 
-.item {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: center;
-  gap: 40px;
-  opacity: 0;
-  transform: translateY(40px);
-  animation: fadeSlideIn 0.8s ease-out forwards;
+.card.revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.item:nth-child(1) { animation-delay: 0.1s; }
-.item:nth-child(2) { animation-delay: 0.15s; }
-.item:nth-child(3) { animation-delay: 0.2s; }
-.item:nth-child(4) { animation-delay: 0.25s; }
-.item:nth-child(5) { animation-delay: 0.3s; }
-.item:nth-child(n+6) { animation-delay: 0.35s; }
-
-@keyframes fadeSlideIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Country label - left side */
-.country {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.6rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-align: right;
-  color: var(--text-primary);
-  line-height: 1.2;
-  position: relative;
-}
-
-.country::after {
-  content: '';
-  position: absolute;
-  right: -20px;
-  top: 50%;
-  width: 1px;
-  height: 60%;
-  transform: translateY(-50%);
-  background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent);
+.card:hover {
+  border-color: rgba(201, 162, 39, 0.3);
 }
 
 /* Image frame */
 .image-frame {
   position: relative;
   width: 100%;
-  max-width: 480px;
-  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--bg-card);
-  border: 1px solid rgba(245, 239, 230, 0.06);
-}
-
-.image-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(201, 162, 39, 0.1);
-  pointer-events: none;
-  z-index: 2;
-  transition: border-color 0.4s ease;
-}
-
-.item:hover .image-frame::before {
-  border-color: rgba(201, 162, 39, 0.3);
-}
-
-/* Golden corner accents */
-.image-frame::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 40px;
-  height: 40px;
-  border-top: 2px solid var(--gold);
-  border-left: 2px solid var(--gold);
-  opacity: 0.6;
-  transition: all 0.4s ease;
-  z-index: 3;
-}
-
-.item:hover .image-frame::after {
-  width: 60px;
-  height: 60px;
-  opacity: 1;
 }
 
 .image-frame img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
   filter: saturate(0.9) contrast(1.05);
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
 }
 
-.item:hover .image-frame img {
+.card:hover .image-frame img {
   transform: scale(1.05);
   filter: saturate(1.1) contrast(1.1);
 }
 
-/* Vignette overlay on images */
 .image-frame .vignette {
   position: absolute;
   inset: 0;
@@ -220,30 +149,40 @@ body::after {
   z-index: 1;
 }
 
-/* Dish label - right side */
-.dish {
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  text-align: left;
-  position: relative;
-  padding-left: 20px;
-}
-
-.dish::before {
-  content: '';
+.bmi-badge {
   position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1px;
-  height: 60%;
-  transform: translateY(-50%);
-  background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent);
+  bottom: 12px;
+  right: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--cream);
+  background: rgba(13, 11, 9, 0.75);
+  backdrop-filter: blur(8px);
+  padding: 4px 12px;
+  z-index: 4;
+  letter-spacing: 0.05em;
 }
 
-.dish a {
+/* Card info */
+.card-info {
+  padding: 16px 20px 20px;
+}
+
+.country {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+
+.dish {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.3s ease;
@@ -251,10 +190,10 @@ body::after {
   position: relative;
 }
 
-.dish a::after {
+.dish::after {
   content: '';
   position: absolute;
-  bottom: -4px;
+  bottom: -2px;
   left: 0;
   width: 0;
   height: 1px;
@@ -262,31 +201,15 @@ body::after {
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dish a:hover {
+.dish:hover {
   color: var(--gold);
 }
 
-.dish a:hover::after {
+.dish:hover::after {
   width: 100%;
 }
 
-
-.bmi-badge {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--cream);
-  background: rgba(13, 11, 9, 0.7);
-  backdrop-filter: blur(8px);
-  padding: 4px 12px;
-  z-index: 4;
-  letter-spacing: 0.05em;
-}
-
-/* Scroll progress indicator */
+/* Scroll progress */
 .scroll-progress {
   position: fixed;
   top: 0;
@@ -298,79 +221,9 @@ body::after {
   transition: height 0.1s linear;
 }
 
-/* Empty state for items without images */
-.item.no-image {
-  opacity: 0.5;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .gallery-wrapper {
-    grid-template-columns: 1fr;
-    padding: 120px 40px 80px;
-  }
-  
-  .ruler {
-    display: none;
-  }
-  
-  .item {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-  }
-  
-  .country {
-    font-size: 1.2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .header {
-    padding: 20px 24px;
-  }
-  
-  .gallery-wrapper {
-    padding: 100px 20px 60px;
-  }
-  
-  .gallery {
-    gap: 60px;
-  }
-  
-  .item {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    gap: 16px;
-    text-align: center;
-  }
-  
-  .country {
-    text-align: center;
-    order: 1;
-  }
-  
-  .country::after {
-    display: none;
-  }
-  
-  .image-frame {
-    order: 2;
-    max-width: 100%;
-  }
-  
-  .dish {
-    text-align: center;
-    order: 3;
-    padding-left: 0;
-  }
-  
-  .dish::before {
-    display: none;
-  }
-}
-
-/* Loading shimmer for images */
+/* Loading shimmer */
 .image-frame.loading {
+  aspect-ratio: 4 / 3;
   background: linear-gradient(
     90deg,
     var(--bg-card) 0%,
@@ -384,4 +237,41 @@ body::after {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .gallery {
+    columns: 3;
+  }
+}
+
+@media (max-width: 1000px) {
+  .gallery {
+    columns: 2;
+  }
+  
+  .gallery-wrapper {
+    padding: 110px 24px 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .header {
+    padding: 20px 24px;
+  }
+  
+  .gallery-wrapper {
+    padding: 100px 16px 40px;
+  }
+  
+  .card-info {
+    padding: 14px 16px 18px;
+  }
 }

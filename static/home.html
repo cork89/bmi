@@ -8,12 +8,10 @@
   </div>
 </header>
 
-<div class="gallery-wrapper">
-  <div class="gallery">
-    {{range .}} {{if .ImageLink}}
-    <article class="item">
-      <div class="country">{{.Country}}</div>
-
+<main class="gallery-wrapper">
+  <div class="gallery" style="--num-cols: {{.NumCols}}; --num-rows: {{.NumRows}};">
+    {{range .Cards}}
+    <article class="card" style="--grid-row: {{.GridRow}}; --grid-col: {{.GridCol}}; --order: {{.Order}};">
       <div class="image-frame">
         <div class="vignette"></div>
         <img
@@ -21,25 +19,23 @@
           alt="National dish of {{.Country}}"
           loading="lazy"
         />
-          <div class="bmi-badge">{{printf "%.1f" .Both}}</div>
+        <div class="bmi-badge">{{printf "%.1f" .Both}}</div>
       </div>
-
-      {{if .NationalDish}}
-      <div class="dish">
-        <a href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
+      
+      <div class="card-info">
+        <h2 class="country">{{.Country}}</h2>
+        {{if .NationalDish}}
+        <a class="dish" href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
           {{.NationalDish}}
         </a>
+        {{end}}
       </div>
-      {{else}}
-      <div class="dish"></div>
-      {{end}}
     </article>
-    {{end}} {{end}}
+    {{end}}
   </div>
-</div>
+</main>
 
 <script>
-  // Scroll progress indicator
   const scrollProgress = document.getElementById('scrollProgress');
   
   function updateScrollProgress() {
@@ -51,11 +47,9 @@
   
   window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
-  // Lazy loading with intersection observer
   const images = document.querySelectorAll('img[data-src]');
   const imageFrames = document.querySelectorAll('.image-frame');
   
-  // Add loading state
   imageFrames.forEach(frame => frame.classList.add('loading'));
 
   const imageObserver = new IntersectionObserver(
@@ -65,44 +59,32 @@
           const img = entry.target;
           const frame = img.closest('.image-frame');
           
-          img.onload = () => {
-            frame.classList.remove('loading');
-          };
-          
+          img.onload = () => frame.classList.remove('loading');
           img.src = img.dataset.src;
           img.removeAttribute('data-src');
           obs.unobserve(img);
         }
       });
     },
-    {
-      rootMargin: '200px',
-    }
+    { rootMargin: '200px' }
   );
 
   images.forEach((img) => imageObserver.observe(img));
 
-  // Reveal animation on scroll
-  const items = document.querySelectorAll('.item');
+  const cards = document.querySelectorAll('.card');
   
   const revealObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.animationPlayState = 'running';
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
         }
       });
     },
-    {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    }
+    { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
   );
 
-  items.forEach((item, index) => {
-    item.style.animationPlayState = 'paused';
-    item.style.animationDelay = `${Math.min(index * 0.05, 0.5)}s`;
-    revealObserver.observe(item);
-  });
+  cards.forEach((card) => revealObserver.observe(card));
 </script>
 {{end}}
