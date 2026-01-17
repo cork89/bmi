@@ -20,13 +20,25 @@ type Row struct {
 	NationalDish string
 	DishWiki     string
 	ImageLink    string
+	AspectRatio  float64
 }
+
+// type CardData struct {
+// 	Row
+// 	GridRow int
+// 	GridCol int
+// 	Order   int
+// }
+
+// type PageData struct {
+// 	Cards   []CardData
+// 	NumCols int
+// 	NumRows int
+// }
 
 type CardData struct {
 	Row
-	GridRow int
-	GridCol int
-	Order   int
+	Order int
 }
 
 type PageData struct {
@@ -38,62 +50,58 @@ type PageData struct {
 var tmpl map[string]*template.Template
 var rows []Row
 
-func calculateDiagonalLayout(rows []Row, numCols int) PageData {
-	numItems := 0
+func prepareCards(rows []Row) []CardData {
+	cards := make([]CardData, 0)
+	order := 1
 	for _, r := range rows {
 		if r.ImageLink != "" {
-			numItems++
-		}
-	}
-
-	numRows := (numItems + numCols - 1) / numCols
-
-	cards := make([]CardData, 0, numItems)
-	positions := make([]struct{ row, col int }, 0, numItems)
-
-	// Generate diagonal positions
-	for d := 0; d < numRows+numCols-1 && len(positions) < numItems; d++ {
-		var row, col int
-		if d < numRows {
-			row = d
-			col = 0
-		} else {
-			row = numRows - 1
-			col = d - numRows + 1
-		}
-
-		for row >= 0 && col < numCols && len(positions) < numItems {
-			positions = append(positions, struct{ row, col int }{row + 1, col + 1})
-			row--
-			col++
-		}
-	}
-
-	// Assign positions to rows with images
-	posIndex := 0
-	orderIndex := 1
-	for _, r := range rows {
-		if r.ImageLink != "" && posIndex < len(positions) {
 			cards = append(cards, CardData{
-				Row:     r,
-				GridRow: positions[posIndex].row,
-				GridCol: positions[posIndex].col,
-				Order:   orderIndex,
+				Row:   r,
+				Order: order,
 			})
-			posIndex++
-			orderIndex++
+			order++
+		}
+	}
+	return cards
+}
+
+func reorderForRowLayout(cards []CardData, numCols int) PageData {
+	n := len(cards)
+	if n == 0 {
+		return PageData{
+			Cards:   cards,
+			NumCols: numCols,
+			NumRows: 0,
+		}
+	}
+
+	numRows := (n + numCols - 1) / numCols
+	reordered := make([]CardData, 0, n)
+
+	for col := 0; col < numCols; col++ {
+		for row := 0; row < numRows; row++ {
+			srcIndex := row*numCols + col
+			if srcIndex < n {
+				reordered = append(reordered, cards[srcIndex])
+			}
 		}
 	}
 
 	return PageData{
-		Cards:   cards,
+		Cards:   reordered,
 		NumCols: numCols,
 		NumRows: numRows,
 	}
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	pageData := calculateDiagonalLayout(rows, 4)
+	// pageData := calculateDiagonalLayout(rows, 4)
+	// pageData.Cards = reorderForRowLayout(pageData.Cards, pageData.NumCols)
+	cards := prepareCards(rows)
+	pageData := reorderForRowLayout(cards, 4)
+	// pageData := PageData{
+	// 	Cards: cards,
+	// }
 	err := tmpl["home"].ExecuteTemplate(w, "base", pageData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -122,12 +130,18 @@ func loadCSV() error {
 			continue
 		}
 
+		aspectRatio, err := strconv.ParseFloat(rec[7], 64)
+		if err != nil {
+			aspectRatio = 0
+		}
+
 		rows = append(rows, Row{
 			Country:      rec[0],
 			Both:         both,
 			NationalDish: rec[4],
 			DishWiki:     rec[5],
 			ImageLink:    rec[6],
+			AspectRatio:  aspectRatio,
 		})
 	}
 

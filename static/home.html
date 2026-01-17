@@ -11,24 +11,26 @@
 <main class="gallery-wrapper">
   <div class="gallery" style="--num-cols: {{.NumCols}}; --num-rows: {{.NumRows}};">
     {{range .Cards}}
-    <article class="card" style="--grid-row: {{.GridRow}}; --grid-col: {{.GridCol}}; --order: {{.Order}};">
-      <div class="image-frame">
+    <article class="card">
+      <div class="image-frame" style="aspect-ratio: {{if .AspectRatio}}{{.AspectRatio}}{{else}}1.33{{end}};">
         <div class="vignette"></div>
         <img
           data-src="https://pub-488a9578ab1844a5a92b26e9a82d4a8d.r2.dev/{{.ImageLink}}"
           alt="National dish of {{.Country}}"
           loading="lazy"
         />
-        <div class="bmi-badge">{{printf "%.1f" .Both}}</div>
       </div>
       
       <div class="card-info">
+        <div>
         <h2 class="country">{{.Country}}</h2>
         {{if .NationalDish}}
         <a class="dish" href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
           {{.NationalDish}}
         </a>
         {{end}}
+        </div>
+        <p>{{printf "%.1f" .Both}}</p>
       </div>
     </article>
     {{end}}

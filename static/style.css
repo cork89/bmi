@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap");
 
 :root {
   --bg-deep: #0d0b09;
@@ -21,7 +21,7 @@ html {
 }
 
 body {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   margin: 0;
   padding: 0;
   background: var(--bg-deep);
@@ -31,18 +31,26 @@ body {
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
-  background: 
-    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(201, 162, 39, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(184, 115, 51, 0.02) 0%, transparent 50%);
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 20% 20%,
+      rgba(201, 162, 39, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 80% 80%,
+      rgba(184, 115, 51, 0.02) 0%,
+      transparent 50%
+    );
   pointer-events: none;
   z-index: 0;
 }
 
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
@@ -51,7 +59,6 @@ body::after {
   z-index: 1;
 }
 
-/* Header */
 .header {
   position: fixed;
   top: 0;
@@ -59,11 +66,16 @@ body::after {
   right: 0;
   z-index: 100;
   padding: 24px 48px;
-  background: linear-gradient(to bottom, var(--bg-deep) 0%, var(--bg-deep) 60%, transparent 100%);
+  background: linear-gradient(
+    to bottom,
+    var(--bg-deep) 0%,
+    var(--bg-deep) 60%,
+    transparent 100%
+  );
 }
 
 .header h1 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: "Cormorant Garamond", serif;
   font-size: 1.4rem;
   font-weight: 400;
   letter-spacing: 0.2em;
@@ -80,7 +92,6 @@ body::after {
   margin: 4px 0 0;
 }
 
-/* Gallery wrapper */
 .gallery-wrapper {
   max-width: 1600px;
   margin: 0 auto;
@@ -89,18 +100,15 @@ body::after {
   z-index: 2;
 }
 
-/* CSS Masonry using columns */
 .gallery {
-  display: grid;
-  grid-template-columns: repeat(var(--num-cols), 1fr);
-  grid-template-rows: repeat(var(--num-rows), auto);
-  gap: 24px;
+  column-count: var(--num-cols);
+  column-gap: 24px;
 }
 
 .card {
-  grid-row: var(--grid-row);
-  grid-column: var(--grid-col);
-  order: var(--order);
+  break-inside: avoid;
+  margin-bottom: 24px;
+  /* Remove grid-row, grid-col, order */
   background: var(--bg-card);
   border: 1px solid rgba(245, 239, 230, 0.06);
   overflow: hidden;
@@ -124,16 +132,25 @@ body::after {
 .image-frame {
   position: relative;
   width: 100%;
+  /* aspect-ratio: 4 / 3; */
   overflow: hidden;
   background: var(--bg-card);
 }
 
 .image-frame img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
   filter: saturate(0.9) contrast(1.05);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  transition:
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.4s ease;
+}
+
+.image-frame.loading {
+  animation: none;
+  background: var(--bg-card);
 }
 
 .card:hover .image-frame img {
@@ -144,7 +161,11 @@ body::after {
 .image-frame .vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(13, 11, 9, 0.4) 100%);
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(13, 11, 9, 0.4) 100%
+  );
   pointer-events: none;
   z-index: 1;
 }
@@ -153,7 +174,7 @@ body::after {
   position: absolute;
   bottom: 12px;
   right: 12px;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: "Cormorant Garamond", serif;
   font-size: 1.6rem;
   font-weight: 600;
   color: var(--cream);
@@ -164,13 +185,19 @@ body::after {
   letter-spacing: 0.05em;
 }
 
-/* Card info */
 .card-info {
-  padding: 16px 20px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.card-info > p {
+ font-size: 30px
 }
 
 .country {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: "Cormorant Garamond", serif;
   font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -191,7 +218,7 @@ body::after {
 }
 
 .dish::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;
@@ -209,7 +236,6 @@ body::after {
   width: 100%;
 }
 
-/* Scroll progress */
 .scroll-progress {
   position: fixed;
   top: 0;
@@ -221,7 +247,6 @@ body::after {
   transition: height 0.1s linear;
 }
 
-/* Loading shimmer */
 .image-frame.loading {
   aspect-ratio: 4 / 3;
   background: linear-gradient(
@@ -235,22 +260,26 @@ body::after {
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Responsive */
 @media (max-width: 1400px) {
   .gallery {
-    columns: 3;
+    column-count: 3;
   }
 }
 
 @media (max-width: 1000px) {
   .gallery {
-    columns: 2;
+    column-count: 2;
   }
-  
+
   .gallery-wrapper {
     padding: 110px 24px 60px;
   }
@@ -258,19 +287,17 @@ body::after {
 
 @media (max-width: 600px) {
   .gallery {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    column-count: 1;
   }
-  
+
   .header {
     padding: 20px 24px;
   }
-  
+
   .gallery-wrapper {
     padding: 100px 16px 40px;
   }
-  
+
   .card-info {
     padding: 14px 16px 18px;
   }
