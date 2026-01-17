@@ -21,6 +21,9 @@ type Row struct {
 	DishWiki     string
 	ImageLink    string
 	AspectRatio  float64
+	Order2Cols   int
+	Order3Cols   int
+	Order4Cols   int
 }
 
 // type CardData struct {
@@ -50,58 +53,52 @@ type PageData struct {
 var tmpl map[string]*template.Template
 var rows []Row
 
-func prepareCards(rows []Row) []CardData {
+func prepareCards(rows []Row, numCols int) []CardData {
 	cards := make([]CardData, 0)
-	order := 1
 	for _, r := range rows {
 		if r.ImageLink != "" {
+			var order int
+			switch numCols {
+			case 2:
+				order = r.Order2Cols
+			case 3:
+				order = r.Order3Cols
+			case 4:
+				order = r.Order4Cols
+			default:
+				order = r.Order4Cols
+			}
+
 			cards = append(cards, CardData{
 				Row:   r,
 				Order: order,
 			})
-			order++
 		}
 	}
+
+	// Sort cards by their pre-calculated order
+	sort.Slice(cards, func(i, j int) bool {
+		return cards[i].Order < cards[j].Order
+	})
+
 	return cards
 }
 
-func reorderForRowLayout(cards []CardData, numCols int) PageData {
-	n := len(cards)
-	if n == 0 {
-		return PageData{
-			Cards:   cards,
-			NumCols: numCols,
-			NumRows: 0,
-		}
+func calculateRows(numCards, numCols int) int {
+	if numCards == 0 {
+		return 0
 	}
-
-	numRows := (n + numCols - 1) / numCols
-	reordered := make([]CardData, 0, n)
-
-	for col := 0; col < numCols; col++ {
-		for row := 0; row < numRows; row++ {
-			srcIndex := row*numCols + col
-			if srcIndex < n {
-				reordered = append(reordered, cards[srcIndex])
-			}
-		}
-	}
-
-	return PageData{
-		Cards:   reordered,
-		NumCols: numCols,
-		NumRows: numRows,
-	}
+	return (numCards + numCols - 1) / numCols
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	// pageData := calculateDiagonalLayout(rows, 4)
-	// pageData.Cards = reorderForRowLayout(pageData.Cards, pageData.NumCols)
-	cards := prepareCards(rows)
-	pageData := reorderForRowLayout(cards, 4)
-	// pageData := PageData{
-	// 	Cards: cards,
-	// }
+	numCols := 4
+	cards := prepareCards(rows, numCols)
+	pageData := PageData{
+		Cards:   cards,
+		NumCols: numCols,
+		NumRows: calculateRows(len(cards), numCols),
+	}
 	err := tmpl["home"].ExecuteTemplate(w, "base", pageData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -135,6 +132,10 @@ func loadCSV() error {
 			aspectRatio = 0
 		}
 
+		order2Cols, _ := strconv.Atoi(rec[8])
+		order3Cols, _ := strconv.Atoi(rec[9])
+		order4Cols, _ := strconv.Atoi(rec[10])
+
 		rows = append(rows, Row{
 			Country:      rec[0],
 			Both:         both,
@@ -142,12 +143,11 @@ func loadCSV() error {
 			DishWiki:     rec[5],
 			ImageLink:    rec[6],
 			AspectRatio:  aspectRatio,
+			Order2Cols:   order2Cols,
+			Order3Cols:   order3Cols,
+			Order4Cols:   order4Cols,
 		})
 	}
-
-	sort.Slice(rows, func(i, j int) bool {
-		return rows[i].Both > rows[j].Both
-	})
 
 	return nil
 }
