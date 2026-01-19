@@ -1,0 +1,30 @@
+{{define "content"}}
+<main class="gallery-wrapper">
+  <div class="gallery" style="--num-cols: {{.NumCols}}; --num-rows: {{.NumRows}};">
+    {{range .Cards}}
+    <article class="card">
+      <div class="image-frame" style="aspect-ratio: {{if .AspectRatio}}{{.AspectRatio}}{{else}}1.33{{end}};">
+        <div class="vignette"></div>
+        <img
+          data-src="{{printf "%s/%s" .ImageSource .ImageLink}}"
+          alt="National dish of {{.Country}}"
+          loading="lazy"
+        />
+      </div>
+      
+      <div class="card-info">
+        <div>
+        <h2 class="country">{{.Country}}</h2>
+        {{if .NationalDish}}
+        <a class="dish" href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
+          {{.NationalDish}}
+        </a>
+        {{end}}
+        </div>
+        <p>{{printf "%.1f" .Both}}</p>
+      </div>
+    </article>
+    {{end}}
+  </div>
+</main>
+{{end}}

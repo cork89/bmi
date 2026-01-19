@@ -4,11 +4,27 @@ import (
 	"bytes"
 	"embed"
 	"encoding/csv"
+	"fmt"
 	"html/template"
-	"math"
+	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
+
+	"github.com/joho/godotenv"
+)
+
+const (
+	colCountry     = 0
+	colBMI         = 1
+	colDish        = 4
+	colDishWiki    = 5
+	colImageLink   = 6
+	colAspectRatio = 7
+	colOrder2      = 8
+	colOrder3      = 9
+	colOrder4      = 10
 )
 
 //go:embed countries.csv
@@ -26,22 +42,10 @@ type Row struct {
 	Order4Cols   int
 }
 
-// type CardData struct {
-// 	Row
-// 	GridRow int
-// 	GridCol int
-// 	Order   int
-// }
-
-// type PageData struct {
-// 	Cards   []CardData
-// 	NumCols int
-// 	NumRows int
-// }
-
 type CardData struct {
 	Row
-	Order int
+	Order       int
+	ImageSource string
 }
 
 type PageData struct {
@@ -50,12 +54,40 @@ type PageData struct {
 	NumRows int
 }
 
-var tmpl map[string]*template.Template
-var rows []Row
+type App struct {
+	Tmpl         map[string]*template.Template
+	Rows         []Row
+	ContentCache map[string][]byte
+}
 
-func prepareCards(rows []Row, numCols int) []CardData {
-	cards := make([]CardData, 0)
-	for _, r := range rows {
+func (app *App) preRenderContent() {
+	for _, numCols := range []int{1, 2, 3, 4} {
+		for _, reversed := range []bool{false, true} {
+			key := fmt.Sprintf("cols:%d:rev:%t", numCols, reversed)
+
+			cards := prepareCards(app.Rows, numCols, reversed)
+			pageData := PageData{
+				Cards:   cards,
+				NumCols: numCols,
+				NumRows: calculateRows(len(cards), numCols),
+			}
+
+			var buf bytes.Buffer
+			if err := app.Tmpl["content"].ExecuteTemplate(&buf, "content", pageData); err != nil {
+				log.Printf("failed to pre-render %s: %v", key, err)
+				continue
+			}
+
+			app.ContentCache[key] = buf.Bytes()
+		}
+	}
+}
+
+func prepareCards(rows []Row, numCols int, reversed bool) []CardData {
+	cards := make([]CardData, 0, len(rows))
+	imgSource := os.Getenv("IMG_SOURCE")
+
+	for i, r := range rows {
 		if r.ImageLink != "" {
 			var order int
 			switch numCols {
@@ -66,18 +98,21 @@ func prepareCards(rows []Row, numCols int) []CardData {
 			case 4:
 				order = r.Order4Cols
 			default:
-				order = r.Order4Cols
+				order = i
 			}
 
 			cards = append(cards, CardData{
-				Row:   r,
-				Order: order,
+				Row:         r,
+				Order:       order,
+				ImageSource: imgSource,
 			})
 		}
 	}
 
-	// Sort cards by their pre-calculated order
 	sort.Slice(cards, func(i, j int) bool {
+		if reversed {
+			return cards[i].Order > cards[j].Order
+		}
 		return cards[i].Order < cards[j].Order
 	})
 
@@ -91,21 +126,56 @@ func calculateRows(numCards, numCols int) int {
 	return (numCards + numCols - 1) / numCols
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	numCols := 4
-	cards := prepareCards(rows, numCols)
-	pageData := PageData{
-		Cards:   cards,
-		NumCols: numCols,
-		NumRows: calculateRows(len(cards), numCols),
-	}
-	err := tmpl["home"].ExecuteTemplate(w, "base", pageData)
+func (app *App) homeHandler(w http.ResponseWriter, r *http.Request) {
+	err := app.Tmpl["home"].ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func loadCSV() error {
+func (app *App) sourcesHandler(w http.ResponseWriter, r *http.Request) {
+	err := app.Tmpl["sources"].ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getNumCols(r *http.Request) int {
+	screenSizeHeader := r.Header.Get("X-Screen-Width")
+	screenSize, err := strconv.Atoi(screenSizeHeader)
+
+	if err != nil {
+		screenSize = 1
+	}
+
+	numCols := 1
+
+	if screenSize > 1400 {
+		numCols = 4
+	} else if screenSize > 1000 {
+		numCols = 3
+	} else if screenSize > 600 {
+		numCols = 2
+	}
+	return numCols
+}
+
+func (app *App) contentHandler(w http.ResponseWriter, r *http.Request) {
+	reversed := r.URL.Query().Get("sort") == "rev"
+	numCols := getNumCols(r)
+
+	key := fmt.Sprintf("cols:%d:rev:%t", numCols, reversed)
+
+	if content, ok := app.ContentCache[key]; ok {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(content)
+		return
+	}
+
+	http.Error(w, "content not found", http.StatusInternalServerError)
+}
+
+func (app *App) loadCSV() error {
 	data, err := csvData.ReadFile("countries.csv")
 	if err != nil {
 		return err
@@ -119,29 +189,43 @@ func loadCSV() error {
 
 	for i, rec := range records {
 		if i == 0 {
+			// skip the column headers
 			continue
 		}
 
-		both, err := strconv.ParseFloat(rec[1], 64)
+		both, err := strconv.ParseFloat(rec[colBMI], 64)
 		if err != nil {
+			log.Println("failed to parse BMI")
 			continue
 		}
 
-		aspectRatio, err := strconv.ParseFloat(rec[7], 64)
+		aspectRatio, err := strconv.ParseFloat(rec[colAspectRatio], 64)
 		if err != nil {
 			aspectRatio = 0
 		}
 
-		order2Cols, _ := strconv.Atoi(rec[8])
-		order3Cols, _ := strconv.Atoi(rec[9])
-		order4Cols, _ := strconv.Atoi(rec[10])
+		order2Cols, err := strconv.Atoi(rec[colOrder2])
+		if err != nil {
+			// log.Println("failed to parse second column order. defaulting to 0.")
+			order2Cols = 0
+		}
+		order3Cols, err := strconv.Atoi(rec[colOrder3])
+		if err != nil {
+			// log.Println("failed to parse third column order. defaulting to 0.")
+			order3Cols = 0
+		}
+		order4Cols, err := strconv.Atoi(rec[colOrder4])
+		if err != nil {
+			// log.Println("failed to parse fourth column order. defaulting to 0.")
+			order4Cols = 0
+		}
 
-		rows = append(rows, Row{
-			Country:      rec[0],
+		app.Rows = append(app.Rows, Row{
+			Country:      rec[colCountry],
 			Both:         both,
-			NationalDish: rec[4],
-			DishWiki:     rec[5],
-			ImageLink:    rec[6],
+			NationalDish: rec[colDish],
+			DishWiki:     rec[colDishWiki],
+			ImageLink:    rec[colImageLink],
 			AspectRatio:  aspectRatio,
 			Order2Cols:   order2Cols,
 			Order3Cols:   order3Cols,
@@ -152,37 +236,37 @@ func loadCSV() error {
 	return nil
 }
 
-func closestRow(value float64) *Row {
-	var best *Row
-	bestDiff := math.MaxFloat64
-
-	for i := range rows {
-		diff := math.Abs(rows[i].Both - value)
-		if diff < bestDiff {
-			bestDiff = diff
-			best = &rows[i]
-		}
+func main() {
+	app := App{
+		Tmpl:         make(map[string]*template.Template),
+		Rows:         make([]Row, 0),
+		ContentCache: make(map[string][]byte),
 	}
 
-	return best
-}
-
-func main() {
-	err := loadCSV()
+	err := app.loadCSV()
 	if err != nil {
 		panic(err)
 	}
 
-	tmpl = make(map[string]*template.Template)
+	err = godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
 
-	tmpl["home"] = template.Must(
+	app.Tmpl["home"] = template.Must(
 		template.ParseFiles("static/home.html", "static/base.html"),
 	)
+	app.Tmpl["content"] = template.Must(template.ParseFiles("static/content.html"))
+	app.Tmpl["sources"] = template.Must(template.ParseFiles("static/sources.html", "static/base.html"))
+	app.preRenderContent()
 
-	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "."+r.URL.Path)
-	})
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	http.HandleFunc("/", homeHandler)
-	http.ListenAndServe(":8083", nil)
+	http.HandleFunc("/", app.homeHandler)
+	http.HandleFunc("/content", app.contentHandler)
+	http.HandleFunc("/sources", app.sourcesHandler)
+
+	if err := http.ListenAndServe(":8083", nil); err != nil {
+		log.Fatal(err)
+	}
 }

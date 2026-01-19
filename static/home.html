@@ -3,90 +3,103 @@
 
 <header class="header">
   <div>
-    <h1>The Atlas of Appetite</h1>
-    <p class="header-subtitle">A Culinary Journey Through Global BMI</p>
+    <h1>National Dishes and BMI</h1>
   </div>
-</header>
 
-<main class="gallery-wrapper">
-  <div class="gallery" style="--num-cols: {{.NumCols}}; --num-rows: {{.NumRows}};">
-    {{range .Cards}}
-    <article class="card">
-      <div class="image-frame" style="aspect-ratio: {{if .AspectRatio}}{{.AspectRatio}}{{else}}1.33{{end}};">
-        <div class="vignette"></div>
-        <img
-          data-src="https://pub-488a9578ab1844a5a92b26e9a82d4a8d.r2.dev/{{.ImageLink}}"
-          alt="National dish of {{.Country}}"
-          loading="lazy"
-        />
-      </div>
-      
-      <div class="card-info">
-        <div>
-        <h2 class="country">{{.Country}}</h2>
-        {{if .NationalDish}}
-        <a class="dish" href="{{.DishWiki}}" target="_blank" rel="noopener noreferrer">
-          {{.NationalDish}}
-        </a>
-        {{end}}
-        </div>
-        <p>{{.Order4Cols}}-{{printf "%.1f" .Both}}</p>
-      </div>
-    </article>
-    {{end}}
+  <div class="sort-toggle">
+    <span class="sort-label">Sort:</span>
+    <div class="toggle-container">
+      <input type="checkbox" id="sortToggle" class="toggle-input" />
+      <label for="sortToggle" class="toggle-slider">
+        <span class="toggle-option left">◯ → Ⅰ</span>
+        <span class="toggle-option right">Ⅰ → ◯</span>
+      </label>
+    </div>
   </div>
-</main>
+  <a href="/sources">Sources</a>
+</header>
+<div id="app"></div>
 
 <script>
-  const scrollProgress = document.getElementById('scrollProgress');
-  
-  function updateScrollProgress() {
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const scrollPercent = (scrollTop / docHeight) * 100;
-    scrollProgress.style.height = scrollPercent + '%';
+  let imageObserver = null;
+  let revealObserver = null;
+  async function initObservers() {
+    imageObserver?.disconnect();
+    revealObserver?.disconnect();
+
+    const cards = document.querySelectorAll(".card");
+    const images = document.querySelectorAll("img[data-src]");
+    const imageFrames = document.querySelectorAll(".image-frame");
+
+    const scrollProgress = document.getElementById("scrollProgress");
+
+    function updateScrollProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      scrollProgress.style.height = scrollPercent + "%";
+    }
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+
+    imageFrames.forEach((frame) => frame.classList.add("loading"));
+    imageObserver = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            const frame = img.closest(".image-frame");
+            img.onload = () => frame.classList.remove("loading");
+            img.src = img.dataset.src;
+            img.removeAttribute("data-src");
+            obs.unobserve(img);
+          }
+        });
+      },
+      { rootMargin: "200px" },
+    );
+    images.forEach((img) => imageObserver.observe(img));
+
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
+    );
+    cards.forEach((card) => revealObserver.observe(card));
   }
-  
-  window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
-  const images = document.querySelectorAll('img[data-src]');
-  const imageFrames = document.querySelectorAll('.image-frame');
-  
-  imageFrames.forEach(frame => frame.classList.add('loading'));
+  async function loadContent(reversed = false) {
+    const url = reversed ? "/content?sort=rev" : "/content";
+    const res = await fetch(url, {
+      headers: { "X-Screen-Width": window.innerWidth.toString() },
+    });
+    if (!res.ok) {
+      console.error("failed to get content");
+      return;
+    }
+    document.getElementById("app").innerHTML = await res.text();
+    initObservers();
+  }
 
-  const imageObserver = new IntersectionObserver(
-    (entries, obs) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          const frame = img.closest('.image-frame');
-          
-          img.onload = () => frame.classList.remove('loading');
-          img.src = img.dataset.src;
-          img.removeAttribute('data-src');
-          obs.unobserve(img);
-        }
-      });
-    },
-    { rootMargin: '200px' }
-  );
+  async function init() {
+    await loadContent();
 
-  images.forEach((img) => imageObserver.observe(img));
+    document.getElementById("sortToggle").addEventListener("change", (e) => {
+      loadContent(e.target.checked);
+    });
 
-  const cards = document.querySelectorAll('.card');
-  
-  const revealObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('revealed');
-          revealObserver.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
-  );
-
-  cards.forEach((card) => revealObserver.observe(card));
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => loadContent(sortToggle.checked), 500);
+    });
+  }
+  init();
 </script>
 {{end}}

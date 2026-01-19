@@ -1,0 +1,99 @@
+{{define "body"}}
+<header class="header">
+  <div>
+    <h1>National Dishes and BMI</h1>
+  </div>
+</header>
+
+<main class="gallery-wrapper">
+  <div
+    style="
+      max-width: 800px;
+      margin: 0 auto;
+      border-left: 1px solid var(--gold-dim);
+      padding-left: 32px;
+    "
+  >
+    <h2 class="country" style="margin-bottom: 24px; color: var(--gold)">
+      Data Sources
+    </h2>
+
+    <div style="margin-bottom: 32px">
+      <a
+        href="https://en.wikipedia.org/wiki/List_of_countries_by_body_mass_index"
+        class="dish"
+        style="font-size: 1rem"
+      >
+        List of countries by body mass index
+      </a>
+      <p
+        style="
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin-top: 8px;
+          line-height: 1.6;
+        "
+      >
+        The data for mean body mass index by country was published by the World
+        Health Organization.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 32px">
+      <a
+        href="https://en.wikipedia.org/wiki/National_dish"
+        class="dish"
+        style="font-size: 1rem"
+      >
+        National Dish
+      </a>
+      <p
+        style="
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin-top: 8px;
+          line-height: 1.6;
+        "
+      >
+        A national dish is a culinary dish that is strongly associated with a
+        particular country.
+      </p>
+    </div>
+  </div>
+  <div
+    style="
+      max-width: 800px;
+      margin: 0 auto;
+      border-left: 1px solid var(--gold-dim);
+      padding-left: 32px;
+    "
+  >
+    <h2 class="country" style="margin-bottom: 24px; color: var(--gold)">
+      Notes
+    </h2>
+
+    <div style="margin-bottom: 32px">
+      <p
+        style="
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin-top: 8px;
+          line-height: 1.6;
+        "
+      >
+        When multiple dishes were listed for national dishes, I selected the first one.
+      </p>
+      <p
+        style="
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin-top: 8px;
+          line-height: 1.6;
+        "
+      >
+        If you see anything that seems incorrect, contribute to wikipedia!  I'll try to update accordingly.
+      </p>
+    </div>
+  </div>
+</main>
+{{end}}
