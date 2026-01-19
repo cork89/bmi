@@ -58,6 +58,14 @@ body::after {
   z-index: 1;
 }
 
+body::before,
+body::after {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 .header {
   position: fixed;
   top: 0;
@@ -69,7 +77,7 @@ body::after {
     to bottom,
     var(--bg-deep) 0%,
     var(--bg-deep) 60%,
-    transparent 100%
+    rgba(13, 11, 9, 0) 100%
   );
   display:flex;
   justify-content: space-between;

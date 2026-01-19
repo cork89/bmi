@@ -94,10 +94,25 @@
       loadContent(e.target.checked);
     });
 
+    let currentCols = null;
+
+    function getNumCols(width) {
+      if (width > 1400) return 4;
+      if (width > 1000) return 3;
+      if (width > 600) return 2;
+      return 1;
+    }
+
     let resizeTimeout;
     window.addEventListener("resize", () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => loadContent(sortToggle.checked), 500);
+      resizeTimeout = setTimeout(() => {
+        const newCols = getNumCols(window.innerWidth);
+        if (newCols !== currentCols) {
+          currentCols = newCols;
+          loadContent(sortToggle.checked);
+        }
+      }, 500);
     });
   }
   init();
