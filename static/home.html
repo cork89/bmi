@@ -19,7 +19,29 @@
   <a href="/sources">Sources</a>
 </header>
 <div id="app"></div>
+<script>
+  window.getCounts = function (message) {
+    const container = document.querySelector('.gallery');
+    const items = container.querySelectorAll('.card');
 
+    const containerRect = container.getBoundingClientRect();
+    const columnWidth = containerRect.width / 4;
+
+    const columnCounts = new Map();
+    items.forEach((item) => {
+    const rect = item.getBoundingClientRect();
+    const col = Math.floor((rect.left - containerRect.left) / columnWidth);
+    columnCounts.set(col, (columnCounts.get(col) || 0) + 1);
+    });
+
+    const result = [];
+    for (let i = 0; i < 4; i++) {
+    result.push(columnCounts.get(i) || 0);
+    }
+    console.log(`Distribution: [${result.join(', ')}]`);
+    console.log(`Total: ${result.reduce((a, b) => a + b, 0)}`);
+};
+</script>
 <script>
   let imageObserver = null;
   let revealObserver = null;

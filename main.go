@@ -61,6 +61,7 @@ type App struct {
 }
 
 func (app *App) preRenderContent() {
+
 	for _, numCols := range []int{1, 2, 3, 4} {
 		for _, reversed := range []bool{false, true} {
 			key := fmt.Sprintf("cols:%d:rev:%t", numCols, reversed)
@@ -265,6 +266,9 @@ func main() {
 	http.HandleFunc("/", app.homeHandler)
 	http.HandleFunc("/content", app.contentHandler)
 	http.HandleFunc("/sources", app.sourcesHandler)
+	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/robots.txt")
+	})
 
 	if err := http.ListenAndServe(":8083", nil); err != nil {
 		log.Fatal(err)
